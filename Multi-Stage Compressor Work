@@ -1,0 +1,189 @@
+clear all
+clc
+
+% Input parameters
+T1 = 293; % Suction temperature, K
+R = 8.3145; %Gas Constant
+roverall = 8.4
+
+% Specific heat ratios from table x
+yN2 = 1.4;
+yO2 = 1.4;
+yAr = 1.66;
+yH2O = 1.33;
+
+% Molar Flowrates (kmol/hr) from stream tables
+rN2 = 560.5;
+rO2 = 150.2;
+rAr = 6.7;
+rH2O = 7.5;
+rtot = rN2 + rO2 + rAr + rH2O
+
+%polytopic coefficent, estimated with figure x
+Ep = 0.73;
+
+%intermediate coefficient
+mN2 = (yN2-1)/(yN2*Ep);
+mO2 = (yO2-1)/(yO2*Ep);
+mAr = (yAr-1)/(yAr*Ep);
+mH2O = (yH2O-1)/(yH2O*Ep);
+
+%polytropic coefficient
+nN2 = 1/(1-mN2)
+nO2 = 1/(1-mO2)
+nAr = 1/(1-mAr)
+nH2O = 1/(1-mH2O)
+navg = (nN2*rN2 + nO2*rO2 + nAr*rAr + nH2O*rH2O)/rtot
+
+%compressability
+TcN2 = 126;
+TcO2 = 154.4;
+TcAr = 151;
+TcH2O = 647;
+
+PcN2 = 34;
+PcO2 = 50.5;
+PcAr = 48.7;
+PcH2O = 220.5;
+
+% Calculate single-stage compressor work
+r1 = roverall;
+P1 = 1;
+P2 = 8;
+
+T2_1 = T1*r1^((navg-1)/navg);
+TrN2_1 = (T1+T2_1)/(2*TcN2);
+TrO2_1 = (T1+T2_1)/(2*TcO2);
+TrAr_1 = (T1+T2_1)/(2*TcAr);
+TrH2O_1 = (T1+T2_1)/(2*TcH2O);
+
+PrN2_1 = (P1+P2)/(2*PcN2);
+PrO2_1 = (P1+P2)/(2*PcO2);
+PrAr_1 = (P1+P2)/(2*PcAr);
+PrH2O_1 = (P1+P2)/(2*PcH2O);
+%all compressability roughly 1
+
+%Work and Cooling Requirements for 1 stage
+wN2_1 = (nN2/(nN2-1))*R*T1*((r1)^((nN2-1)/nN2)-1);
+WN2_1 = wN2_1*rN2;
+wO2_1 = (nO2/(nO2-1))*R*T1*((r1)^((nO2-1)/nO2)-1);
+WO2_1 = wO2_1*rO2;
+wAr_1 = (nAr/(nAr-1))*R*T1*((r1)^((nAr-1)/nAr)-1);
+WAr_1 = wAr_1*rAr;
+wH2O_1 = (nH2O/(nH2O-1))*R*T1*((r1)^((nH2O-1)/nH2O)-1);
+WH2O_1 = wH2O_1*rH2O;
+Total_Theo_Work_1 = WN2_1 + WO2_1 + WAr_1 + WH2O_1;
+Total_Actual_Work_1 = Total_Theo_Work_1/(Ep*1000*3600) %MW
+
+T2_1 = T1*r1^((navg-1)/navg); %K
+Cooling_required_1 = T2_1-T1; %K
+Cooling_per_stage_1 = (T2_1-T1);
+
+%Work and Cooling Requirements for 2 stages, assuming perfect cooling
+r2 = roverall^(1/2);
+wN2_2 = (nN2/(nN2-1))*R*T1*((r2)^((nN2-1)/nN2)-1)+(nN2/(nN2-1))*R*T1*((r2)^((nN2-1)/nN2)-1);
+WN2_2 = wN2_2*rN2;
+wO2_2 = (nO2/(nO2-1))*R*T1*((r2)^((nO2-1)/nO2)-1)+(nO2/(nO2-1))*R*T1*((r2)^((nO2-1)/nO2)-1);
+WO2_2 = wO2_2*rO2;
+wAr_2 = (nAr/(nAr-1))*R*T1*((r2)^((nAr-1)/nAr)-1)+(nAr/(nAr-1))*R*T1*((r2)^((nAr-1)/nAr)-1);
+WAr_2 = wAr_2*rAr;
+wH2O_2 = (nH2O/(nH2O-1))*R*T1*((r2)^((nH2O-1)/nH2O)-1)+(nH2O/(nH2O-1))*R*T1*((r2)^((nH2O-1)/nH2O)-1);
+WH2O_2 = wH2O_2*rH2O;
+Total_Theo_Work_2 = WN2_2 + WO2_2 + WAr_2 + WH2O_2;
+Total_Actual_Work_2 = Total_Theo_Work_2/(Ep*1000*3600)
+
+T2_2 = T1*r2^((navg-1)/navg);
+Cooling_required_2 = 2*(T2_2-T1);%K
+Cooling_per_stage_2 = (T2_2-T1);
+
+%Work and Cooling Requirements for 3 stages, assuming perfect cooling
+r3 = roverall^(1/3);
+wN2_3 = (nN2/(nN2-1))*R*T1*((r3)^((nN2-1)/nN2)-1)+(nN2/(nN2-1))*R*T1*((r3)^((nN2-1)/nN2)-1)+(nN2/(nN2-1))*R*T1*((r3)^((nN2-1)/nN2)-1);
+WN2_3 = wN2_3*rN2;
+wO2_3 = (nO2/(nO2-1))*R*T1*((r3)^((nO2-1)/nO2)-1)+(nO2/(nO2-1))*R*T1*((r3)^((nO2-1)/nO2)-1)+(nO2/(nO2-1))*R*T1*((r3)^((nO2-1)/nO2)-1);
+WO2_3 = wO2_3*rO2;
+wAr_3 = (nAr/(nAr-1))*R*T1*((r3)^((nAr-1)/nAr)-1)+(nAr/(nAr-1))*R*T1*((r3)^((nAr-1)/nAr)-1)+(nAr/(nAr-1))*R*T1*((r3)^((nAr-1)/nAr)-1);
+WAr_3 = wAr_3*rAr;
+wH2O_3 = (nH2O/(nH2O-1))*R*T1*((r3)^((nH2O-1)/nH2O)-1)+(nH2O/(nH2O-1))*R*T1*((r3)^((nH2O-1)/nH2O)-1)+(nH2O/(nH2O-1))*R*T1*((r3)^((nH2O-1)/nH2O)-1);
+WH2O_3 = wH2O_3*rH2O;
+Total_Theo_Work_3 = WN2_3 + WO2_3 + WAr_3 + WH2O_3;
+Total_Actual_Work_3 = Total_Theo_Work_3/(Ep*1000*3600)
+
+T2_3 = T1*r3^((navg-1)/navg);
+Cooling_required_3 = 3*(T2_3-T1)
+Cooling_per_stage_3 = (T2_3-T1);
+
+%Work and Cooling Requirements for 4 stages, assuming perfect cooling
+r4 = roverall^(1/4);
+wN2_4 = (nN2/(nN2-1))*R*T1*((r4)^((nN2-1)/nN2)-1)+(nN2/(nN2-1))*R*T1*((r4)^((nN2-1)/nN2)-1)+(nN2/(nN2-1))*R*T1*((r4)^((nN2-1)/nN2)-1)+(nN2/(nN2-1))*R*T1*((r4)^((nN2-1)/nN2)-1);
+WN2_4 = wN2_4*rN2;
+wO2_4 = (nO2/(nO2-1))*R*T1*((r4)^((nO2-1)/nO2)-1)+(nO2/(nO2-1))*R*T1*((r4)^((nO2-1)/nO2)-1)+(nO2/(nO2-1))*R*T1*((r4)^((nO2-1)/nO2)-1)+(nO2/(nO2-1))*R*T1*((r4)^((nO2-1)/nO2)-1);
+WO2_4 = wO2_4*rO2;
+wAr_4 = (nAr/(nAr-1))*R*T1*((r4)^((nAr-1)/nAr)-1)+(nAr/(nAr-1))*R*T1*((r4)^((nAr-1)/nAr)-1)+(nAr/(nAr-1))*R*T1*((r4)^((nAr-1)/nAr)-1)+(nAr/(nAr-1))*R*T1*((r4)^((nAr-1)/nAr)-1);
+WAr_4 = wAr_4*rAr;
+wH2O_4 = (nH2O/(nH2O-1))*R*T1*((r4)^((nH2O-1)/nH2O)-1)+(nH2O/(nH2O-1))*R*T1*((r4)^((nH2O-1)/nH2O)-1)+(nH2O/(nH2O-1))*R*T1*((r4)^((nH2O-1)/nH2O)-1)+(nH2O/(nH2O-1))*R*T1*((r4)^((nH2O-1)/nH2O)-1);
+WH2O_4 = wH2O_4*rH2O;
+Total_Theo_Work_4 = WN2_4 + WO2_4 + WAr_4 + WH2O_4;
+Total_Actual_Work_4 = Total_Theo_Work_4/(Ep*1000*3600);
+
+T2_4 = T1*r4^((navg-1)/navg);
+Cooling_required_4 = 4*(T2_4-T1);
+Cooling_per_stage_4 = (T2_4-T1);
+
+%Work and Cooling Requirements for 5 stages, assuming perfect cooling
+r5 = roverall^(1/5);
+wN2_5 = (nN2/(nN2-1))*R*T1*((r5)^((nN2-1)/nN2)-1)+(nN2/(nN2-1))*R*T1*((r5)^((nN2-1)/nN2)-1)+(nN2/(nN2-1))*R*T1*((r5)^((nN2-1)/nN2)-1)+(nN2/(nN2-1))*R*T1*((r5)^((nN2-1)/nN2)-1)+(nN2/(nN2-1))*R*T1*((r5)^((nN2-1)/nN2)-1);
+WN2_5 = wN2_5*rN2;
+wO2_5 = (nO2/(nO2-1))*R*T1*((r5)^((nO2-1)/nO2)-1)+(nO2/(nO2-1))*R*T1*((r5)^((nO2-1)/nO2)-1)+(nO2/(nO2-1))*R*T1*((r5)^((nO2-1)/nO2)-1)+(nO2/(nO2-1))*R*T1*((r5)^((nO2-1)/nO2)-1)+(nO2/(nO2-1))*R*T1*((r5)^((nO2-1)/nO2)-1);
+WO2_5 = wO2_5*rO2;
+wAr_5 = (nAr/(nAr-1))*R*T1*((r5)^((nAr-1)/nAr)-1)+(nAr/(nAr-1))*R*T1*((r5)^((nAr-1)/nAr)-1)+(nAr/(nAr-1))*R*T1*((r5)^((nAr-1)/nAr)-1)+(nAr/(nAr-1))*R*T1*((r5)^((nAr-1)/nAr)-1)+(nAr/(nAr-1))*R*T1*((r5)^((nAr-1)/nAr)-1);
+WAr_5 = wAr_5*rAr;
+wH2O_5 = (nH2O/(nH2O-1))*R*T1*((r5)^((nH2O-1)/nH2O)-1)+(nH2O/(nH2O-1))*R*T1*((r5)^((nH2O-1)/nH2O)-1)+(nH2O/(nH2O-1))*R*T1*((r5)^((nH2O-1)/nH2O)-1)+(nH2O/(nH2O-1))*R*T1*((r5)^((nH2O-1)/nH2O)-1)+(nH2O/(nH2O-1))*R*T1*((r5)^((nH2O-1)/nH2O)-1);
+WH2O_5 = wH2O_5*rH2O;
+Total_Theo_Work_5 = WN2_5 + WO2_5 + WAr_5 + WH2O_5;
+Total_Actual_Work_5 = Total_Theo_Work_5/(Ep*1000*3600);
+
+T2_5 = T1*r5^((navg-1)/navg);
+Cooling_required_5 = 5*(T2_5-T1);
+Cooling_per_stage_5 = (T2_5-T1);
+
+%Costing with increasing stages
+%Sinnott and Towler Centrifugal Compressor Parameters
+a = 490000
+b = 16800
+n = 0.6
+Index = (816.3/509.7)
+LFUK = 1.02
+Dollar_to_Pound = 0.8245
+
+%Values have units of £Million
+Cost1Stage = (a + b*(Total_Actual_Work_1*1000)^n)*Index*LFUK*Dollar_to_Pound/1000000
+Cost2Stage = (a + b*((Total_Actual_Work_2/2)*1000)^n)*Index*LFUK*Dollar_to_Pound*2/1000000
+Cost3Stage = (a + b*((Total_Actual_Work_3/3)*1000)^n)*Index*LFUK*Dollar_to_Pound*3/1000000
+Cost4Stage = (a + b*((Total_Actual_Work_4/4)*1000)^n)*Index*LFUK*Dollar_to_Pound*4/1000000
+Cost5Stage = (a + b*((Total_Actual_Work_5/5)*1000)^n)*Index*LFUK*Dollar_to_Pound*5/1000000
+
+%visual representation
+Number_units = 1:5;
+work = [Total_Actual_Work_1,Total_Actual_Work_2,Total_Actual_Work_3,Total_Actual_Work_4,Total_Actual_Work_5];
+coolingrequirements = [Cooling_required_1,Cooling_required_2,Cooling_required_3,Cooling_required_4,Cooling_required_5];
+Cost = [Cost1Stage,Cost2Stage,Cost3Stage,Cost4Stage,Cost5Stage];
+%cooling_per_stage = [Cooling_per_stage_1,Cooling_per_stage_2,Cooling_per_stage_3,Cooling_per_stage_4,Cooling_per_stage_5]  
+
+subplot(3,1,1)
+plot(Number_units,work,'Marker','x','MarkerSize',10,'Color','r','MarkerEdgeColor','k')
+title("Compression work vs Number of compression stages","FontSize",9.5)
+ylabel("Compression work (MW)","FontSize",11)
+xlabel("Number of stages","FontSize",11)
+
+subplot(3,1,2)
+plot(Number_units,coolingrequirements,'Marker','x','MarkerSize',10,'Color','b','MarkerEdgeColor','k')
+title("Cooling requirements vs Number of compression stages","FontSize",9.5)
+ylabel("Cooling required (°C)","FontSize",11)
+xlabel("Number of stages","FontSize",11)
+
+subplot(3,1,3)
+plot(Number_units,Cost,'Marker','x','MarkerSize',10,'Color','g','MarkerEdgeColor','k')
+title("Capital Cost of Compressors vs Number of compression stages","FontSize",9.5)
+ylabel("Compression Cost (£M)","FontSize",11)
+xlabel("Number of stages","FontSize",11)
